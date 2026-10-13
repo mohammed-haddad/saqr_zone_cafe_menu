@@ -67,6 +67,6 @@ function load(first){
     .catch(()=>{if(first)document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
 }
 load(true);
-setInterval(load,60000);
+setInterval(load,10000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)load(false)});
 </script></body></html>
