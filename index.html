@@ -53,7 +53,14 @@ function render(m){
      <footer><div class="big">${E(m.shop||"")}</div>الأسعار بالجنيه المصري · قد تخضع للتغيير</footer>`;
   document.title=m.shop||"القائمة";
 }
-fetch("menu.json?v="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(m=>{
-  if(!m||!m.items||!m.items.length)throw 0;render(m);
-}).catch(()=>{document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
+let lastSig="";
+function load(first){
+  fetch("menu.json?v="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(m=>{
+    if(!m||!m.items||!m.items.length)throw 0;
+    const sig=JSON.stringify(m);if(sig!==lastSig){lastSig=sig;render(m);}
+  }).catch(()=>{if(first)document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
+}
+load(true);
+setInterval(load,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)load(false)});
 </script></body></html>
