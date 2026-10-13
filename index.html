@@ -54,11 +54,17 @@ function render(m){
   document.title=m.shop||"القائمة";
 }
 let lastSig="";
+// Read the menu from GitHub "raw" (updates within seconds of publishing). Fall back to the Pages copy.
+function rawUrl(){try{const u=location.hostname.split(".")[0],r=location.pathname.split("/").filter(Boolean)[0];
+  if(location.hostname.endsWith("github.io")&&u&&r)return "https://raw.githubusercontent.com/"+u+"/"+r+"/main/menu.json";}catch(e){}return null;}
+function get(url){return fetch(url+(url.indexOf("?")<0?"?":"&")+"v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()});}
+function apply(m,first){if(!m||!m.items||!m.items.length){if(first)document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>';return;}
+  const sig=JSON.stringify(m);if(sig!==lastSig){lastSig=sig;render(m);}}
 function load(first){
-  fetch("menu.json?v="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(m=>{
-    if(!m||!m.items||!m.items.length)throw 0;
-    const sig=JSON.stringify(m);if(sig!==lastSig){lastSig=sig;render(m);}
-  }).catch(()=>{if(first)document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
+  const raw=rawUrl();
+  (raw?get(raw).catch(()=>get("menu.json")):get("menu.json"))
+    .then(m=>apply(m,first))
+    .catch(()=>{if(first)document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
 }
 load(true);
 setInterval(load,60000);
