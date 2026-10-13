@@ -1,0 +1,59 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>القائمة</title>
+<style>
+:root{
+  --bg:#f3f1ea; --surface:#fbfaf6; --ink:#15233f; --mut:#6b7891;
+  --accent:#1f6fbf; --gold:#c08a2d; --line:#e4e0d4; --navy:#15233f;
+  --disp:"El Messiri","Segoe UI",Tahoma,sans-serif; --body:"Tajawal","Segoe UI",Tahoma,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1826; --surface:#16233a; --ink:#eef2f8; --mut:#9fb0c8; --accent:#5aa0e6; --gold:#e3b765; --line:#26374f; --navy:#0b1422; color-scheme:dark;
+}}
+:root[data-theme="dark"]{--bg:#0f1826; --surface:#16233a; --ink:#eef2f8; --mut:#9fb0c8; --accent:#5aa0e6; --gold:#e3b765; --line:#26374f; --navy:#0b1422; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body)}
+.wrap{max-width:620px;margin:0 auto;padding-block:0 40px;padding-inline:18px}
+header.hd{background:var(--navy);color:#fff;margin-inline:-18px;padding:26px 18px 22px;text-align:center}
+header.hd img{height:92px;width:auto;margin:0 auto 6px;display:block;filter:drop-shadow(0 2px 6px #0004)}
+.tag{font-family:var(--disp);letter-spacing:.35em;font-size:13px;color:#cdd8ea;text-transform:uppercase;margin-top:2px}
+.cat{margin-top:30px}
+.cat h2{font-family:var(--disp);font-size:24px;margin:0 0 4px;text-wrap:balance;display:flex;align-items:center;gap:12px}
+.cat h2::after{content:"";height:2px;flex:1;background:linear-gradient(90deg,var(--gold),transparent)}
+ul.items{list-style:none;margin:10px 0 0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+ul.items li{display:flex;align-items:center;gap:12px;padding:12px 16px}
+ul.items li+li{border-top:1px solid var(--line)}
+.ph{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none}
+.g{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.nm{font-size:17px;font-weight:500}
+.dots{flex:1;border-bottom:2px dotted var(--line);transform:translateY(-4px)}
+.pr{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pr .cur{font-family:var(--body);font-size:12px;font-weight:500;color:var(--mut);margin-inline-start:3px}
+footer{margin-top:34px;text-align:center;color:var(--mut);font-size:13px;line-height:1.7}
+footer .big{font-family:var(--disp);color:var(--ink);font-size:16px}
+.msg{padding:50px 16px;text-align:center;color:var(--mut)}
+</style></head><body>
+<div class="wrap"><div id="app"><p class="msg">...</p></div></div>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700&display=swap">
+<script>
+const E=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
+function price(p){p=Math.round(parseFloat(p)*100)/100;return p===Math.trunc(p)?String(p):p.toFixed(2)}
+function render(m){
+  const cur=m.cur||"",cats=m.cats&&m.cats.length?m.cats:[...new Set(m.items.map(i=>i.cat))];
+  const by={};m.items.forEach(i=>(by[i.cat]||(by[i.cat]=[])).push(i));
+  const order=[...cats.filter(c=>by[c]),...Object.keys(by).filter(c=>!cats.includes(c))];
+  const hasImg=m.items.some(i=>i.img);
+  const logo=m.logo?`<img src="${m.logo}" alt="">`:`<div class="tag" style="font-size:30px;letter-spacing:.2em">${E(m.shop||"")}</div>`;
+  const secs=order.map(c=>`<section class="cat"><h2>${E(c)}</h2><ul class="items">${by[c].map(i=>{
+    const img=hasImg?(i.img?`<img class="ph" src="${i.img}" alt="">`:`<div class="ph" style="background:hsl(${hue(i.name)} 28% 84%)"></div>`):"";
+    return `<li>${img}<span class="g"><span class="nm">${E(i.name)}</span><span class="dots"></span></span><span class="pr">${price(i.price)}<span class="cur">${E(cur)}</span></span></li>`;
+  }).join("")}</ul></section>`).join("");
+  document.getElementById("app").innerHTML=
+    `<header class="hd">${logo}<div class="tag">قائمة الأسعار</div></header>${secs}
+     <footer><div class="big">${E(m.shop||"")}</div>الأسعار بالجنيه المصري · قد تخضع للتغيير</footer>`;
+  document.title=m.shop||"القائمة";
+}
+fetch("menu.json?v="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(m=>{
+  if(!m||!m.items||!m.items.length)throw 0;render(m);
+}).catch(()=>{document.getElementById("app").innerHTML='<p class="msg">القائمة غير متاحة حالياً.</p>'});
+</script></body></html>
