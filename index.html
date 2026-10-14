@@ -16,7 +16,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body)}
 header.hd{background:var(--navy);color:#fff;margin-inline:-18px;padding:26px 18px 22px;text-align:center}
 header.hd img{height:92px;width:auto;margin:0 auto 6px;display:block;filter:drop-shadow(0 2px 6px #0004)}
 .tag{font-family:var(--disp);letter-spacing:.35em;font-size:13px;color:#cdd8ea;text-transform:uppercase;margin-top:2px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:3;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:20px;padding:7px 16px;white-space:nowrap;font:inherit;font-size:15px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .cat{margin-top:30px}
+.cat.hide{display:none}
 .cat h2{font-family:var(--disp);font-size:24px;margin:0 0 4px;text-wrap:balance;display:flex;align-items:center;gap:12px}
 .cat h2::after{content:"";height:2px;flex:1;background:linear-gradient(90deg,var(--gold),transparent)}
 ul.items{list-style:none;margin:10px 0 0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -38,22 +43,26 @@ footer .big{font-family:var(--disp);color:var(--ink);font-size:16px}
 const E=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 function price(p){p=Math.round(parseFloat(p)*100)/100;return p===Math.trunc(p)?String(p):p.toFixed(2)}
-function render(m){
+let curMenu=null,CAT="All";
+function render(m){curMenu=m;drawMenu();document.title=m.shop||"القائمة";}
+function drawMenu(){
+  const m=curMenu;if(!m)return;
   const cur=m.cur||"",cats=m.cats&&m.cats.length?m.cats:[...new Set(m.items.map(i=>i.cat))];
   const by={};m.items.forEach(i=>(by[i.cat]||(by[i.cat]=[])).push(i));
   const order=[...cats.filter(c=>by[c]),...Object.keys(by).filter(c=>!cats.includes(c))];
+  if(CAT!="All"&&!order.includes(CAT))CAT="All";
   const hasImg=m.items.some(i=>i.img);
   const logo=m.logo?`<img src="${m.logo}" alt="">`:`<div class="tag" style="font-size:30px;letter-spacing:.2em">${E(m.shop||"")}</div>`;
-  const secs=order.map(c=>`<section class="cat"><h2>${E(c)}</h2><ul class="items">${by[c].map(i=>{
+  const chips=order.length>1?`<div class="chips">${["All",...order].map(c=>`<button class="chip ${c==CAT?"on":""}" data-c="${E(c)}">${c=="All"?"الكل":E(c)}</button>`).join("")}</div>`:"";
+  const secs=order.map(c=>`<section class="cat ${CAT!="All"&&CAT!=c?"hide":""}"><h2>${E(c)}</h2><ul class="items">${by[c].map(i=>{
     const img=hasImg?(i.img?`<img class="ph" src="${i.img}" alt="">`:`<div class="ph" style="background:hsl(${hue(i.name)} 28% 84%)"></div>`):"";
     return `<li>${img}<span class="g"><span class="nm">${E(i.name)}</span><span class="dots"></span></span><span class="pr">${price(i.price)}<span class="cur">${E(cur)}</span></span></li>`;
   }).join("")}</ul></section>`).join("");
   document.getElementById("app").innerHTML=
-    `<header class="hd">${logo}<div class="tag">قائمة الأسعار</div></header>${secs}
+    `<header class="hd">${logo}<div class="tag">قائمة الأسعار</div></header>${chips}${secs}
      <footer><div class="big">${E(m.shop||"")}</div>الأسعار بالجنيه المصري · قد تخضع للتغيير</footer>`;
-  document.title=m.shop||"القائمة";
 }
-let lastSig="";
+document.addEventListener("click",e=>{const b=e.target.closest("[data-c]");if(b){CAT=b.dataset.c;drawMenu();window.scrollTo(0,0);}});let lastSig="";
 // Read the menu from GitHub "raw" (updates within seconds of publishing). Fall back to the Pages copy.
 function rawUrl(){try{const u=location.hostname.split(".")[0],r=location.pathname.split("/").filter(Boolean)[0];
   if(location.hostname.endsWith("github.io")&&u&&r)return "https://raw.githubusercontent.com/"+u+"/"+r+"/main/menu.json";}catch(e){}return null;}
